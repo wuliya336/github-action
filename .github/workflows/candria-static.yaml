@@ -1,0 +1,126 @@
+name: candria-static
+
+env:
+  APP_NAME: candria-static
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "要构建的仓库名称"
+        required: true
+        type: string
+      ref:
+        description: "要构建的分支或标签"
+        required: false
+        type: string
+        default: "main"
+      server_host:
+        description: "服务器主机地址"
+        required: true
+        type: string
+      server_username:
+        description: "服务器用户名"
+        required: true
+        type: string
+      server_private_key:
+        description: "服务器密码"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.inputs.repository }}-${{ github.event.inputs.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 获取token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: 获取用户ID
+        id: get-user-id
+        shell: bash
+        run: |
+          user_id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)
+          echo "user-id=$user_id" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.inputs.repository }}
+          ref: ${{ github.event.inputs.ref }}
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: 设置 go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.24.4'
+
+      - name: 设置 bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 编译go二进制文件
+        run: |
+          # GOOS=linux GOARCH=amd64 go build -o build/${{ env.APP_NAME }} -ldflags "-s -w -X main.version=${{ github.sha }}"
+          GOOS=linux GOARCH=amd64 go build -o build/${{ env.APP_NAME }} -ldflags "-s -w"
+        working-directory: packages/api
+
+      - name: 构建静态文件
+        run: |
+          bun install
+          bun run build
+        working-directory: packages/web
+
+      - name: 上传二进制文件
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}
+          SOURCE: "packages/api/build/${{ env.APP_NAME }}"
+          REMOTE_HOST: ${{ github.event.inputs.server_host }}
+          REMOTE_USER: ${{ github.event.inputs.server_username }}
+          TARGET: "/opt/${{ env.APP_NAME }}"
+
+      - name: 上传静态文件
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}
+          SOURCE: "packages/api/web"
+          REMOTE_HOST: ${{ github.event.inputs.server_host }}
+          REMOTE_USER: ${{ github.event.inputs.server_username }}
+          TARGET: "/opt/${{ env.APP_NAME }}"
+
+      - name: 上传数据文件
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}
+          SOURCE: "packages/api/data"
+          REMOTE_HOST: ${{ github.event.inputs.server_host }}
+          REMOTE_USER: ${{ github.event.inputs.server_username }}
+          TARGET: "/opt/${{ env.APP_NAME }}"
+      
+      - name: 重启服务
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ github.event.inputs.server_host }}
+          username: ${{ github.event.inputs.server_username }}
+          password: ${{ secrets.PASSWORD }}
+          key: ${{ github.event.inputs.server_private_key }}
+          script: cd /opt/${{ env.APP_NAME }} && docker-compose up -d --build
+      
+
+  
