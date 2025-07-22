@@ -1,7 +1,7 @@
-name: candria-static
+name: candria-api
 
 env:
-  APP_NAME: candria-static
+  APP_NAME: candria-api
 
 on:
   workflow_dispatch:
@@ -69,20 +69,20 @@ jobs:
         with:
           go-version: '^1.24.4'
 
-      - name: 设置 bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+      # - name: 设置 bun
+      #   uses: oven-sh/setup-bun@v2
+      #   with:
+      #     bun-version: latest
 
       - name: 编译go二进制文件
         run: |
           GOOS=linux GOARCH=amd64 go build -o build/${{ env.APP_NAME }} -ldflags "-s -w"
 
-      - name: 构建静态文件
-        run: |
-          bun install
-          bun run build
-        working-directory: web
+      # - name: 构建静态文件
+      #   run: |
+      #     bun install
+      #     bun run build
+      #   working-directory: web
 
       - name: 上传二进制文件
         uses: easingthemes/ssh-deploy@main
@@ -93,14 +93,14 @@ jobs:
           REMOTE_USER: ${{ github.event.inputs.server_username }}
           TARGET: "/opt/${{ env.APP_NAME }}"
 
-      - name: 上传静态文件
-        uses: easingthemes/ssh-deploy@main
-        with:
-          SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}
-          SOURCE: "dist"
-          REMOTE_HOST: ${{ github.event.inputs.server_host }}
-          REMOTE_USER: ${{ github.event.inputs.server_username }}
-          TARGET: "/opt/${{ env.APP_NAME }}"
+      # - name: 上传静态文件
+      #   uses: easingthemes/ssh-deploy@main
+      #   with:
+      #     SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}
+      #     SOURCE: "dist"
+      #     REMOTE_HOST: ${{ github.event.inputs.server_host }}
+      #     REMOTE_USER: ${{ github.event.inputs.server_username }}
+      #     TARGET: "/opt/${{ env.APP_NAME }}"
 
       - name: 上传数据文件
         uses: easingthemes/ssh-deploy@main
