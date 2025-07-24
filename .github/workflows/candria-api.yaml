@@ -64,19 +64,25 @@ jobs:
           ref: ${{ github.event.inputs.ref }}
           token: ${{ steps.app-token.outputs.token }}
 
-      - name: 设置 go
-        uses: actions/setup-go@v5
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@1.85.0
+
+      - name: 启用 Rust 缓存
+        uses: swatinem/rust-cache@v2
         with:
-          go-version: '^1.24.4'
+          prefix-key: ${{ env.APP_NAME }}
+      
+      - name: 添加目标平台
+        run: rustup target add x86_64-unknown-linux-gnu
+
+      - name: 构建目标平台
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
 
       # - name: 设置 bun
       #   uses: oven-sh/setup-bun@v2
       #   with:
       #     bun-version: latest
-
-      - name: 编译go二进制文件
-        run: |
-          GOOS=linux GOARCH=amd64 go build -o build/${{ env.APP_NAME }} -ldflags "-s -w"
 
       # - name: 构建静态文件
       #   run: |
@@ -88,7 +94,7 @@ jobs:
         uses: easingthemes/ssh-deploy@main
         with:
           SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}
-          SOURCE: "build/${{ env.APP_NAME }}"
+          SOURCE: "target/release/${{ env.APP_NAME }}"
           REMOTE_HOST: ${{ github.event.inputs.server_host }}
           REMOTE_USER: ${{ github.event.inputs.server_username }}
           TARGET: "/opt/${{ env.APP_NAME }}"
@@ -105,7 +111,7 @@ jobs:
       - name: 上传数据文件
         uses: easingthemes/ssh-deploy@main
         with:
-          SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}
+          SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}ci
           SOURCE: "data"
           REMOTE_HOST: ${{ github.event.inputs.server_host }}
           REMOTE_USER: ${{ github.event.inputs.server_username }}
