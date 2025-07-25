@@ -2,6 +2,7 @@ name: candria-api
 
 env:
   APP_NAME: candria-api
+  target: x86_64-unknown-linux-gnu
 
 on:
   workflow_dispatch:
@@ -73,11 +74,10 @@ jobs:
           prefix-key: ${{ env.APP_NAME }}
       
       - name: 添加目标平台
-        run: rustup target add x86_64-unknown-linux-gnu
+        run: rustup target add ${{ env.target }}
 
       - name: 构建目标平台
-        run: cargo build --release --target x86_64-unknown-linux-gnu
-
+        run: cargo build --release --target ${{ env.target }}
 
       # - name: 设置 bun
       #   uses: oven-sh/setup-bun@v2
@@ -94,7 +94,7 @@ jobs:
         uses: easingthemes/ssh-deploy@main
         with:
           SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}
-          SOURCE: "target/release/${{ env.APP_NAME }}"
+          SOURCE: "target/${{ env.target }}/release/${{ env.APP_NAME }}"
           REMOTE_HOST: ${{ github.event.inputs.server_host }}
           REMOTE_USER: ${{ github.event.inputs.server_username }}
           TARGET: "/opt/${{ env.APP_NAME }}"
@@ -111,7 +111,7 @@ jobs:
       - name: 上传数据文件
         uses: easingthemes/ssh-deploy@main
         with:
-          SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}ci
+          SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}
           SOURCE: "data"
           REMOTE_HOST: ${{ github.event.inputs.server_host }}
           REMOTE_USER: ${{ github.event.inputs.server_username }}
