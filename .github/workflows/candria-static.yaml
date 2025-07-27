@@ -97,7 +97,7 @@ jobs:
           SOURCE: "target/${{ env.target }}/release/${{ env.APP_NAME }}"
           REMOTE_HOST: ${{ github.event.inputs.server_host }}
           REMOTE_USER: ${{ github.event.inputs.server_username }}
-          TARGET: "/opt/${{ env.APP_NAME }}"
+          TARGET: "/opt/${{ env.APP_NAME }}/"
 
       - name: 上传静态文件
         uses: easingthemes/ssh-deploy@main
