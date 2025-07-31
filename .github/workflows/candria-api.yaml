@@ -108,14 +108,14 @@ jobs:
       #     REMOTE_USER: ${{ github.event.inputs.server_username }}
       #     TARGET: "/opt/${{ env.APP_NAME }}"
 
-      - name: 上传数据文件
-        uses: easingthemes/ssh-deploy@main
-        with:
-          SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}
-          SOURCE: "data"
-          REMOTE_HOST: ${{ github.event.inputs.server_host }}
-          REMOTE_USER: ${{ github.event.inputs.server_username }}
-          TARGET: "/opt/${{ env.APP_NAME }}"
+      # - name: 上传数据文件
+      #   uses: easingthemes/ssh-deploy@main
+      #   with:
+      #     SSH_PRIVATE_KEY: ${{ github.event.inputs.server_private_key }}
+      #     SOURCE: "data"
+      #     REMOTE_HOST: ${{ github.event.inputs.server_host }}
+      #     REMOTE_USER: ${{ github.event.inputs.server_username }}
+      #     TARGET: "/opt/${{ env.APP_NAME }}"
       
       - name: 重启服务
         uses: appleboy/ssh-action@v1
