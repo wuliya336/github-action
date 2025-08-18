@@ -2,7 +2,7 @@ name: candria-static
 
 env:
   APP_NAME: candria-static
-  target: x86_64-unknown-linux-gnu
+  target: x86_64-unknown-linux-musl
 
 on:
   workflow_dispatch:
