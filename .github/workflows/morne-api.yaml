@@ -1,7 +1,7 @@
-name: candria-api
+name: morne-api
 
 env:
-  APP_NAME: candria-api
+  APP_NAME: morne-api
   target: x86_64-unknown-linux-musl
 
 on:
