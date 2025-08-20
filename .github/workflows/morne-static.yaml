@@ -1,7 +1,7 @@
-name: candria-static
+name: morne-static
 
 env:
-  APP_NAME: candria-static
+  APP_NAME: morne-static
   target: x86_64-unknown-linux-musl
 
 on:
@@ -64,6 +64,12 @@ jobs:
           repository: ${{ github.event.inputs.repository }}
           ref: ${{ github.event.inputs.ref }}
           token: ${{ steps.app-token.outputs.token }}
+
+      - name: 安装工具
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+          
 
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@1.85.0
